@@ -1,0 +1,8 @@
+name = Address Book Entity
+description = Provides entity Address Book.
+core = 7.x
+
+files[]=abe.controller.inc
+files[]=abe.entity.inc
+
+dependencies[] = entity

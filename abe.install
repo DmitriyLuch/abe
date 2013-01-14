@@ -1,0 +1,32 @@
+<?php
+/**
+ * @file
+ * Install, update, and uninstall functions for the abe.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+
+function abe_schema() {
+
+  $schema['abe_contacts'] = array(
+    'description' => 'Address book entity table',
+    'fields' => array(
+      'cid' => array(
+        'description' => 'The primary identifier for a contact.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'user_id' => array(
+        'description' => 'User identifier.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('cid'),
+  );
+  return $schema;
+}

@@ -1,0 +1,280 @@
+<?php
+
+/**
+ * @file Main file of the module.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function abe_menu() {
+  $items['abe/%abe_entity'] = array(
+    'title' => 'View address book',
+    'page callback' => 'abe_view_page',
+    'page arguments' => array(1),
+    'access callback' => 'abe_access',
+    'access arguments' => array('view address book')
+  );
+
+  $items['admin/structure/abe/manage'] = array(
+    'title' => 'Manage address book',
+    'page callback' => 'abe_manage_page',
+    'access arguments' => array('administer address book'),
+  );
+  return $items;
+}
+
+/**
+ * Page callback for 'abe/%abe_contact'.
+ * @param $entity
+ */
+function abe_view_page($entity) {
+  dsm($entity);
+  /**
+   * @var $controller AddressBookEntityController
+   */
+  $controller = entity_get_controller('abe_entity');
+  $content = $controller->view(array($entity->cid => $entity));
+  drupal_set_title($entity->field_name);
+
+  return $content;
+}
+
+/**
+ * Implements hook_ENTITY_access().
+ * @param $op
+ * @param null $entity
+ * @param null $account
+ */
+function abe_access($op, $entity = NULL, $account = NULL) {
+  return user_access('administer address book', $account);
+}
+
+/**
+ * Page callback for 'admin/structure/abe/manage'.
+ * @return string
+ */
+function abe_manage_page() {
+  return 'Settings will be here';
+}
+
+/**
+ * Implements hook_entity_info().
+ */
+function abe_entity_info() {
+  $return = array(
+    'abe_entity' => array(
+      'label' => t('Address Book'),
+      'entity class' => 'abeEntity',
+      'controller class' => 'abeEntityController',
+      'base table' => 'abe_contacts',
+      'uri callback' => 'abe_uri',
+
+      'fieldable' => TRUE,
+      'entity keys' => array(
+        'id' => 'cid',
+        'label' => 'cid'
+      ),
+      'bundle keys' => array(),
+      'bundles' => array(
+        'abe_entity' => array(
+          'label' => 'Address Book',
+          'admin' => array(
+            'path' => 'admin/structure/abe/manage',
+            'access arguments' => array('administer address book'),
+          ),
+        )
+      ),
+      'view modes' => array(
+        'full' => array(
+          'label' => t('Full content'),
+          'custom settings' => FALSE,
+        ),
+      ),
+      'access callback' => 'abe_access',
+
+      'admin ui' => array(
+        'path' => 'admin/content/abe',
+      ),
+      'module' => 'abe'
+    ),
+  );
+
+  return $return;
+}
+
+/**
+ * Implements hook_entity_property_info().
+ */
+function abe_entity_property_info() {
+  $info = array();
+  $properties = &$info['abe_entity']['properties'];
+
+  $properties['cid'] = array(
+    'label' => t("Contact id"),
+    'type' => 'abe_entity',
+    'description' => t("Contact id"),
+    'getter callback' => 'entity_property_verbatim_get',
+    'schema field' => 'cid',
+  );
+
+  $properties['user_id'] = array(
+    'label' => t("Contact author"),
+    'type' => 'user',
+    'description' => t("Contact author"),
+    'getter callback' => 'entity_property_verbatim_get',
+    'schema field' => 'user_id',
+  );
+
+  return $info;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function abe_permission() {
+  return array(
+    'administer address book' =>  array(
+      'title' => t('Administer address book'),
+      'description' => t('Allow user to administer address book.'),
+    ),
+
+  );
+}
+
+/**
+ * Entity API functions.
+ */
+
+/**
+ * Implements hook_ENTITY_create().
+ * @param $values
+ * @return bool
+ */
+function abe_create($values) {
+  return entity_create('abe_entity', $values);
+}
+
+/**
+ * Implements hook_ENTITY_load_multiple().
+ * @param bool $ids
+ * @param array $conditions
+ * @param bool $reset
+ * @return mixed
+ */
+function abe_load_multiple($ids = FALSE, $conditions = array(), $reset = FALSE) {
+  return entity_load('abe_entity', $ids, $conditions, $reset);
+}
+
+/**
+ * Implements hook_ENTITY_load().
+ * @param $id
+ * @return mixed
+ */
+function abe_load($id) {
+  return current(abe_load_multiple(array($id)));
+}
+
+/**
+ * Implements hook_ENTITY_delete().
+ * @param $id
+ * @return bool
+ */
+function abe_delete($id) {
+  return entity_delete('abe_entity', $id);
+}
+
+/**
+ * Implements hook_ENTITY_save().
+ * @param $entity
+ * @return bool
+ */
+function abe_save($entity) {
+  return entity_save('abe_entity', $entity);
+}
+
+/**
+ * Implements hook_ENTITY_uri().
+ * @param $entity
+ * @return array
+ */
+function abe_uri($entity) {
+  return array(
+    'path' => 'abe/' . $entity->cid,
+  );
+}
+
+/**
+ * Forms callbacks.
+ */
+
+/**
+ * Add/edit entity form.
+ * @param $form
+ * @param $form_state
+ * @param $entity
+ * @return mixed
+ */
+function abe_entity_form($form, &$form_state, $entity) {
+  $form['cid'] = array(
+    '#type' => 'hidden',
+    '#title' => t('cid'),
+    '#default_value' => $entity->cid,
+  );
+
+  $form['basic_entity'] = array(
+    '#type' => 'value',
+    '#value' => $entity,
+  );
+
+  field_attach_form('abe_entity', $entity, $form, $form_state);
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save'),
+    '#weight' => 100,
+  );
+  if (empty($entity->is_new)) {
+    $form['delete'] = array(
+      '#type' => 'submit',
+      '#value' => t('Delete'),
+      '#weight' => 200,
+    );
+  }
+
+  return $form;
+}
+
+/**
+ * Validate callback for abe_entity_form.
+ * @param $form
+ * @param $form_state
+ */
+function abe_entity_form_validate($form, &$form_state) {
+  if($form_state['clicked_button']['#value']==t('Save')){
+    field_attach_form_validate('abe_entity', $form_state['values']['basic_entity'], $form, $form_state);
+  }
+}
+
+/**
+ * Submit callback for abe_entity_form.
+ */
+function abe_entity_form_submit($form, &$form_state) {
+  $entity = $form_state['values']['basic_entity'];
+
+  if($form_state['clicked_button']['#value']==t('Save')){
+    $entity->cid = $form_state['values']['cid'];
+    field_attach_submit('abe_entity', $entity, $form, $form_state);
+    $result = abe_save($entity);
+    if ($result == FALSE) {
+      drupal_set_message(t('Cannot save address book contact.'), 'error');
+    }
+  }
+  else if($form_state['clicked_button']['#value']==t('Delete')){
+    abe_delete($entity->cid);
+    drupal_set_message(t('The entity ID %id has been deleted',
+        array('%id' => $entity->cid))
+    );
+  }
+  $form_state['redirect'] = 'admin/content/abe';
+}
