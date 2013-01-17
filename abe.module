@@ -12,7 +12,7 @@ function abe_menu() {
     'title' => 'View address book',
     'page callback' => 'abe_view_page',
     'page arguments' => array(1),
-    'access callback' => 'abe_access',
+    'access callback' => 'abeEntity_access',
     'access arguments' => array('view address book')
   );
 
@@ -46,7 +46,7 @@ function abe_view_page($entity) {
  * @param null $entity
  * @param null $account
  */
-function abe_access($op, $entity = NULL, $account = NULL) {
+function abeEntity_access($op, $entity = NULL, $account = NULL) {
   return user_access('administer address book', $account);
 }
 
@@ -68,7 +68,7 @@ function abe_entity_info() {
       'entity class' => 'abeEntity',
       'controller class' => 'abeEntityController',
       'base table' => 'abe_contacts',
-      'uri callback' => 'abe_uri',
+      'uri callback' => 'abeEntity_uri',
 
       'fieldable' => TRUE,
       'entity keys' => array(
@@ -91,7 +91,7 @@ function abe_entity_info() {
           'custom settings' => FALSE,
         ),
       ),
-      'access callback' => 'abe_access',
+      'access callback' => 'abeEntity_access',
 
       'admin ui' => array(
         'path' => 'admin/content/abe',
@@ -151,7 +151,7 @@ function abe_permission() {
  * @param $values
  * @return bool
  */
-function abe_create($values) {
+function abeEntity_create($values) {
   return entity_create('abe_entity', $values);
 }
 
@@ -162,7 +162,7 @@ function abe_create($values) {
  * @param bool $reset
  * @return mixed
  */
-function abe_load_multiple($ids = FALSE, $conditions = array(), $reset = FALSE) {
+function abeEntity_load_multiple($ids = FALSE, $conditions = array(), $reset = FALSE) {
   return entity_load('abe_entity', $ids, $conditions, $reset);
 }
 
@@ -171,8 +171,8 @@ function abe_load_multiple($ids = FALSE, $conditions = array(), $reset = FALSE) 
  * @param $id
  * @return mixed
  */
-function abe_load($id) {
-  return current(abe_load_multiple(array($id)));
+function abeEntity_load($id) {
+  return current(abeEntity_load_multiple(array($id)));
 }
 
 /**
@@ -180,7 +180,7 @@ function abe_load($id) {
  * @param $id
  * @return bool
  */
-function abe_delete($id) {
+function abeEntity_delete($id) {
   return entity_delete('abe_entity', $id);
 }
 
@@ -189,7 +189,7 @@ function abe_delete($id) {
  * @param $entity
  * @return bool
  */
-function abe_save($entity) {
+function abeEntity_save($entity) {
   return entity_save('abe_entity', $entity);
 }
 
@@ -198,7 +198,7 @@ function abe_save($entity) {
  * @param $entity
  * @return array
  */
-function abe_uri($entity) {
+function abeEntity_uri($entity) {
   return array(
     'path' => 'abe/' . $entity->cid,
   );
@@ -265,13 +265,13 @@ function abe_entity_form_submit($form, &$form_state) {
   if($form_state['clicked_button']['#value']==t('Save')){
     $entity->cid = $form_state['values']['cid'];
     field_attach_submit('abe_entity', $entity, $form, $form_state);
-    $result = abe_save($entity);
+    $result = abeEntity_save($entity);
     if ($result == FALSE) {
       drupal_set_message(t('Cannot save address book contact.'), 'error');
     }
   }
   else if($form_state['clicked_button']['#value']==t('Delete')){
-    abe_delete($entity->cid);
+    abeEntity_delete($entity->cid);
     drupal_set_message(t('The entity ID %id has been deleted',
         array('%id' => $entity->cid))
     );
